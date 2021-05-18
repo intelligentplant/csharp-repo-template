@@ -10,9 +10,9 @@
   <Import Project=".\build\Dependencies.props" Condition="Exists('.\build\Dependencies.props')" />
 
   <PropertyGroup>
-    <Authors>{{AUTHORS}}</Authors>
-    <Company>{{COMPANY_NAME}}</Company>
-    <PackageProjectUrl>https://github.com/{{GITHUB_USER_OR_ORG_NAME}}/{{REPO_NAME}}</PackageProjectUrl>
+    <Authors>Intelligent Plant</Authors>
+    <Company>Intelligent Plant</Company>
+    <PackageProjectUrl>https://github.com/intelligentplant/{{REPO_NAME}}</PackageProjectUrl>
     <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages\$(Configuration)</PackageOutputPath>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <NeutralLanguage>en</NeutralLanguage>
