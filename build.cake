@@ -1,3 +1,7 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Use build.ps1 to run the build script. Command line arguments are documented below.
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 const string DefaultSolutionName = "./RENAME-ME.sln";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20,6 +24,9 @@ const string DefaultSolutionName = "./RENAME-ME.sln";
 //   Specifies if this is a rebuild rather than an incremental build. All artifact, bin, and test 
 //   output folders will be cleaned prior to running the specified target.
 //
+// --no-tests
+//   Specifies that tests should be skipped.
+//
 // --ci
 //   Forces continuous integration build mode. Not required if the build is being run by a 
 //   supported continuous integration build system.
@@ -37,7 +44,12 @@ const string DefaultSolutionName = "./RENAME-ME.sln";
 //
 // --verbose
 //   Enables verbose messages.
-// 
+//
+// --property=<PROPERTY>
+//   Specifies an additional property to pass to MSBuild during Build and Pack targets. The value
+//   must be specified using a '<NAME>=<VALUE>' format e.g. --property="NoWarn=CS1591". This 
+//   argument can be specified multiple times.
+//   
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 #addin nuget:?package=Cake.Git&version=1.0.0
@@ -66,8 +78,10 @@ Setup<BuildState>(context => {
             Configuration = Argument("configuration", "Debug"),
             ContinuousIntegrationBuild = HasArgument("ci") || !BuildSystem.IsLocalBuild,
             Clean = HasArgument("clean"),
+            SkipTests = HasArgument("no-tests"),
             SignOutput = HasArgument("sign-output"),
-            Verbose = HasArgument("verbose")
+            Verbose = HasArgument("verbose"),
+            MSBuildProperties = HasArgument("property") ? Arguments<string>("property") : new List<string>()
         };
 
         // Get raw version numbers from JSON.
@@ -104,11 +118,13 @@ Setup<BuildState>(context => {
 // Pre-task action.
 TaskSetup(context => {
     BuildUtilities.WriteTaskStartMessage(BuildSystem, context.Task.Name);
+    BuildUtilities.WriteLogMessage(BuildSystem, $"Running {context.Task.Name} task");
 });
 
 
 // Post task action.
 TaskTeardown(context => {
+    BuildUtilities.WriteLogMessage(BuildSystem, $"Completed {context.Task.Name} task");
     BuildUtilities.WriteTaskEndMessage(BuildSystem, context.Task.Name);
 });
 
@@ -156,6 +172,7 @@ Task("Build")
 // Runs unit tests.
 Task("Test")
     .IsDependentOn("Build")
+    .WithCriteria<BuildState>((c, state) => !state.SkipTests)
     .Does<BuildState>(state => {
         var testSettings = new DotNetCoreTestSettings {
             Configuration = state.Configuration,
